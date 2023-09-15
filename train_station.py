@@ -3,7 +3,7 @@ import random
 
 
 # Parameters
-num_passengers = 100000  # Total number of passengers
+num_passengers = 250  # Total number of passengers
 ticket_issue_rate_clerk = 1  # Exponential distribution rate for ticket issue at clerk
 ticket_issue_rate_machine = 0.7  # Exponential distribution rate for ticket issue at machine
 machine_failure_mean = 1000  # Mean of the normal distribution for machine failure rate
@@ -11,7 +11,7 @@ machine_failure_std = 200  # Standard deviation of the normal distribution for m
 repair_time_rate = 1 / 30  # Rate parameter for repair time exponential distribution
 train_A_interarrival_rate = 1 / 14  # Rate parameter for train A inter-arrival time exponential distribution
 train_B_interarrival_rate = 1 / 25  # Rate parameter for train B inter-arrival time exponential distribution
-seats_per_train = 120  # Total number of seats per train
+seats_train = 120  # Total number of seats per train
 seat_min = 15  # Minimum seat availability Uniform Random variable
 seat_max = 35  # Maximum seat availability Uniform Random variable
 
@@ -33,13 +33,14 @@ class TrainStation(object):
     def __init__(self, env):
         self.env = env
         self.machine = simpy.Resource(env, capacity=2)
-        self.train_A = simpy.Resource(env, capacity=seats_per_train)
-        self.train_B = simpy.Resource(env, capacity=seats_per_train)
+        self.train_A = simpy.Resource(env, capacity=seats_train)
+        self.train_B = simpy.Resource(env, capacity=seats_train)
         self.total_passengers = 0
         self.waiting_times = []             # List to store all waiting times
         self.ticket_purchase_times = []     # List to store all ticket purchase times
 
     def purchase_ticket(self, passenger):
+
         yield self.env.timeout(generate_ticket_issue_time(passenger.is_machine))
         self.ticket_purchase_times.append(self.env.now)
         if passenger.is_machine:
@@ -63,8 +64,8 @@ class Passenger(object):
     def __init__(self, env, name):
         self.env = env
         self.name = name
-        self.is_machine = random.choice([True, False])
-        self.destination = random.choice(['A', 'B'])
+        self.is_machine = random.choice([True, False])  # Random choice
+        self.destination = random.choice(['A', 'B'])    # Random choice
         self.action = env.process(self.run())
 
     def run(self):
@@ -73,18 +74,18 @@ class Passenger(object):
         yield self.env.process(station.board_train(self))
         print(f"Passenger {self.name} boarded train {self.destination} at time {self.env.now - arrival_time:.2f}")
 
-# Initialize the simulation environment
+# simulation environment
 env = simpy.Environment()
 station = TrainStation(env)
 
-# Create passengers
+# Passengers creation
 for i in range(num_passengers):
     passenger = Passenger(env, i)
 
 # Run the simulation
 env.run()
 
-# Calculate and print results
+# Printing the results
 average_ticket_purchase_time = sum(station.ticket_purchase_times) / len(station.ticket_purchase_times)
 average_waiting_time = sum(station.waiting_times) / station.total_passengers
 
