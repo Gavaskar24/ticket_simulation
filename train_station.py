@@ -32,12 +32,12 @@ def generate_machine_failure_rate():
 class TrainStation(object):
     def __init__(self, env):
         self.env = env
-        self.machine = simpy.Resource(env, capacity=1)
+        self.machine = simpy.Resource(env, capacity=2)
         self.train_A = simpy.Resource(env, capacity=seats_per_train)
         self.train_B = simpy.Resource(env, capacity=seats_per_train)
         self.total_passengers = 0
-        self.waiting_times = []
-        self.ticket_purchase_times = []
+        self.waiting_times = []             # List to store all waiting times
+        self.ticket_purchase_times = []     # List to store all ticket purchase times
 
     def purchase_ticket(self, passenger):
         yield self.env.timeout(generate_ticket_issue_time(passenger.is_machine))
