@@ -3,7 +3,7 @@ import random
 
 
 # Parameters
-num_passengers = 250  # Total number of passengers
+simulation_time = 10000  # Total simulation time
 ticket_issue_rate_clerk = 1  # Exponential distribution rate for ticket issue at clerk
 ticket_issue_rate_machine = 0.7  # Exponential distribution rate for ticket issue at machine
 machine_failure_mean = 1000  # Mean of the normal distribution for machine failure rate
@@ -32,6 +32,7 @@ def generate_machine_failure_rate():
 class TrainStation(object):
     def __init__(self, env):
         self.env = env
+        # Machine is modelled as pre-emptive resource
         self.machine = simpy.Resource(env, capacity=2)
         self.train_A = simpy.Resource(env, capacity=seats_train)
         self.train_B = simpy.Resource(env, capacity=seats_train)
@@ -59,14 +60,17 @@ class TrainStation(object):
         yield self.env.timeout(seat_availability)
         self.total_passengers += 1
         self.waiting_times.append(self.env.now)
+#  The arrival of passengers is independent for both cities
+# So coin flip is not needed 
 
 class Passenger(object):
     def __init__(self, env, name):
         self.env = env
         self.name = name
-        self.is_machine = random.choice([True, False])  # Random choice
-        self.destination = random.choice(['A', 'B'])    # Random choice
-        self.action = env.process(self.run())
+        self.is_machine = random.choice([True, False])
+        self.destination = random.choice(['A', 'B'])
+        env.process(self.run())
+
 
     def run(self):
         arrival_time = self.env.now
